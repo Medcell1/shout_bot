@@ -1,16 +1,11 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
-const OpenAI = require("openai");
 const Twit = require("twit");
 require("dotenv").config();
 
 const app = express();
 app.use(bodyParser.json());
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
 
 const T = new Twit({
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
@@ -27,10 +22,19 @@ app.post(`/webhook/${process.env.TELEGRAM_BOT_TOKEN}`, async (req, res) => {
   const prompt = message.text;
 
   try {
-const completion = await openai.chat.completions.create({
-  model: "gpt-3.5-turbo",
-  messages: [{ role: "user", content: prompt }],
-});
+    const completion = await axios.post(
+      "https://openrouter.ai/api/v1/chat/completions",
+      {
+        model: "deepseek/deepseek-chat:free",
+        messages: [{ role: "user", content: prompt }],
+      },
+      {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        },
+      }
+    );
 
     const tweet = completion.data.choices[0].message.content;
 
@@ -41,7 +45,7 @@ const completion = await openai.chat.completions.create({
       text: `✅ Tweet posted: "${tweet}"`,
     });
   } catch (error) {
-    console.error(error);
+    console.error("Error posting tweet or generating message:", error?.response?.data || error.message);
     await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
       chat_id: chatId,
       text: "❌ An error occurred while generating or posting your tweet.",
