@@ -25,7 +25,7 @@ app.post(`/webhook/${process.env.TELEGRAM_BOT_TOKEN}`, async (req, res) => {
     const completion = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
-        model: "deepseek/deepseek-chat:free",
+        model: "deepseek/deepseek-chat-v3-0324:free",
         messages: [{ role: "user", content: prompt }],
       },
       {
