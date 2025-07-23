@@ -19,9 +19,31 @@ app.post(`/webhook/${process.env.TELEGRAM_BOT_TOKEN}`, async (req, res) => {
   if (!message || !message.text) return res.sendStatus(200);
 
   const chatId = message.chat.id;
-  const prompt = message.text;
+  const text = message.text.trim();
+
+  // Only proceed if it starts with /tweet
+  if (!text.startsWith("/tweet")) {
+    console.log("Received non-tweet command:", text);
+    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      chat_id: chatId,
+      text: `🤖 Send your tweet like this: /tweet Your message here.`,
+    });
+    return res.sendStatus(200);
+  }
+
+  const prompt = text.replace("/tweet", "").trim();
+
+  if (!prompt) {
+    await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
+      chat_id: chatId,
+      text: "❌ Please provide content after /tweet",
+    });
+    return res.sendStatus(200);
+  }
 
   try {
+    console.log("Generating tweet for prompt:", prompt);
+
     const completion = await axios.post(
       "https://openrouter.ai/api/v1/chat/completions",
       {
@@ -36,8 +58,9 @@ app.post(`/webhook/${process.env.TELEGRAM_BOT_TOKEN}`, async (req, res) => {
       }
     );
 
-    const tweet = completion.data.choices[0].message.content;
+    const tweet = completion.data.choices[0].message.content.trim();
 
+    console.log("Tweeting:", tweet);
     await T.post("statuses/update", { status: tweet });
 
     await axios.post(`https://api.telegram.org/bot${process.env.TELEGRAM_BOT_TOKEN}/sendMessage`, {
@@ -54,6 +77,7 @@ app.post(`/webhook/${process.env.TELEGRAM_BOT_TOKEN}`, async (req, res) => {
 
   res.sendStatus(200);
 });
+
 
 app.get("/", (req, res) => res.send("Bot is running."));
 
