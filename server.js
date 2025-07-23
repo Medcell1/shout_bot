@@ -1,16 +1,16 @@
 const express = require("express");
 const bodyParser = require("body-parser");
 const axios = require("axios");
-const { Configuration, OpenAIApi } = require("openai");
+const OpenAI = require("openai");
 const Twit = require("twit");
 require("dotenv").config();
 
 const app = express();
 app.use(bodyParser.json());
 
-const openai = new OpenAIApi(new Configuration({
+const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
-}));
+});
 
 const T = new Twit({
   consumer_key: process.env.TWITTER_CONSUMER_KEY,
