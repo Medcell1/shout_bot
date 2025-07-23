@@ -27,10 +27,11 @@ app.post(`/webhook/${process.env.TELEGRAM_BOT_TOKEN}`, async (req, res) => {
   const prompt = message.text;
 
   try {
-    const completion = await openai.createChatCompletion({
-      model: "gpt-3.5-turbo",
-      messages: [{ role: "user", content: prompt }],
-    });
+const completion = await openai.chat.completions.create({
+  model: "gpt-3.5-turbo",
+  messages: [{ role: "user", content: prompt }],
+});
+
     const tweet = completion.data.choices[0].message.content;
 
     await T.post("statuses/update", { status: tweet });
